@@ -1,27 +1,38 @@
 package discord;
 
 import haxe.Constraints.Function;
-#if hl
-import haxe.Int32 as UInt32;
-import haxe.Int64 as UInt64;
-#else
-import cpp.UInt32;
-import cpp.UInt64;
-import cpp.ConstCharStar;
-#end
 import haxe.Int32;
 import haxe.Int64;
 import haxe.Int64Helper;
 
 using discord.Utils;
 
+#if hl
+import haxe.Int32 as UInt32;
+import haxe.Int64 as UInt64;
+#else
+import cpp.ConstCharStar;
+import cpp.UInt32;
+import cpp.UInt64;
+#end
+
+typedef DiscordUsr = {
+	Username:String,
+	ID:String,
+	Avatar:String
+}
+
 class Discord {
-	public static final onActivityJoin:DiscordEvent<(String)->Void, (String)->Void> = new DiscordEvent();
-	public static final onActivitySpectate:DiscordEvent<(String)->Void, (String)->Void> = new DiscordEvent();
-	public static final onActivityJoinRequest:DiscordEvent<(Int64, String, String, String, Bool)->Void, (DiscordUser->Void)> = new DiscordEvent();
-	public static final onActivityInvite:DiscordEvent<InviteEvent, (DiscordUser, DiscordActivity)->Void> = new DiscordEvent();
+	public static final onActivityJoin:DiscordEvent<(String) -> Void, (String) -> Void> = new DiscordEvent();
+	public static final onActivitySpectate:DiscordEvent<(String) -> Void, (String) -> Void> = new DiscordEvent();
+	public static final onActivityJoinRequest:DiscordEvent<(Int64, String, String, String, Bool) -> Void, (DiscordUser -> Void)> = new DiscordEvent();
+	public static final onActivityInvite:DiscordEvent<InviteEvent, (DiscordUser, DiscordActivity) -> Void> = new DiscordEvent();
+
+	public static var CurrentUser:DiscordUsr;
 
 	public static function create(clientID:String, flags:DiscordCreateFlags = Default):DiscordResult {
+		CurrentUser = {Username: '', ID: '', Avatar: ''}
+
 		final result:DiscordResult = DiscordExterns.create(Int64Helper.parseString(clientID), flags).toResult();
 		if (result != Ok)
 			return result;
@@ -46,54 +57,59 @@ class Discord {
 					bot: bot
 				});
 		};
+
 		/*DiscordExterns.on_activity_join_request(onActivityJoinRequest.trigger);
-		onActivityInvite.trigger = (userID:Int64, username:ConstCharStar, userDiscriminator:ConstCharStar, userAvatar:ConstCharStar, userBot:Bool, activityType:DiscordActivityType, applicationID:Int64, activityName:ConstCharStar, activityState:ConstCharStar, activityDetails:ConstCharStar, startTimestamp:Int64, endTimestamp:Int64, assetsLargeImage:ConstCharStar, assetsLargeText:ConstCharStar, assetsSmallImage:ConstCharStar, assetsSmallText:ConstCharStar, partyID:ConstCharStar, partySize:Int32, partyMax:Int32, partyPrivacy:DiscordActivityPartyPrivacy, matchSecret:ConstCharStar, joinSecret:ConstCharStar, spectateSecret:ConstCharStar,activityInstance:Bool, activitySupportedPlatforms:DiscordActivitySupportedPlatformFlags) -> {
-			for (slot in onActivityInvite.slots)
-				slot({
-					id: Std.string(userID),
-					username: username,
-					discriminator: userDiscriminator,
-					avatar: userAvatar,
-					bot: userBot
-				}, {
-					type: activityType,
-					applicationID: Std.string(applicationID),
-					name: activityName,
-					state: activityState,
-					details: activityDetails,
-					timestamps: {
-						start: startTimestamp,
-						end: endTimestamp
-					},
-					assets: {
-						largeImage: assetsLargeImage,
-						largeText: assetsLargeText,
-						smallImage: assetsSmallImage,
-						smallText: assetsSmallText
-					},
-					party: {
-						id: partyID,
-						size: {
-							current: partySize,
-							max: partyMax
+			onActivityInvite.trigger = (userID:Int64, username:ConstCharStar, userDiscriminator:ConstCharStar, userAvatar:ConstCharStar, userBot:Bool, activityType:DiscordActivityType, applicationID:Int64, activityName:ConstCharStar, activityState:ConstCharStar, activityDetails:ConstCharStar, startTimestamp:Int64, endTimestamp:Int64, assetsLargeImage:ConstCharStar, assetsLargeText:ConstCharStar, assetsSmallImage:ConstCharStar, assetsSmallText:ConstCharStar, partyID:ConstCharStar, partySize:Int32, partyMax:Int32, partyPrivacy:DiscordActivityPartyPrivacy, matchSecret:ConstCharStar, joinSecret:ConstCharStar, spectateSecret:ConstCharStar,activityInstance:Bool, activitySupportedPlatforms:DiscordActivitySupportedPlatformFlags) -> {
+				for (slot in onActivityInvite.slots)
+					slot({
+						id: Std.string(userID),
+						username: username,
+						discriminator: userDiscriminator,
+						avatar: userAvatar,
+						bot: userBot
+					}, {
+						type: activityType,
+						applicationID: Std.string(applicationID),
+						name: activityName,
+						state: activityState,
+						details: activityDetails,
+						timestamps: {
+							start: startTimestamp,
+							end: endTimestamp
 						},
-						privacy: partyPrivacy,
-					},
-					secrets: {
-						match: matchSecret,
-						join: joinSecret,
-						spectate: spectateSecret
-					},
-					instance: activityInstance,
-					supportedPlatforms: activitySupportedPlatforms
-				});
-		}
-		DiscordExterns.on_activity_invite(onActivityInvite.trigger);*/
+						assets: {
+							largeImage: assetsLargeImage,
+							largeText: assetsLargeText,
+							smallImage: assetsSmallImage,
+							smallText: assetsSmallText
+						},
+						party: {
+							id: partyID,
+							size: {
+								current: partySize,
+								max: partyMax
+							},
+							privacy: partyPrivacy,
+						},
+						secrets: {
+							match: matchSecret,
+							join: joinSecret,
+							spectate: spectateSecret
+						},
+						instance: activityInstance,
+						supportedPlatforms: activitySupportedPlatforms
+					});
+			}
+			DiscordExterns.on_activity_invite(onActivityInvite.trigger); */
 
 		return result;
 	}
 
 	public static function runCallbacks():DiscordResult {
+		CurrentUser.ID = Std.string(DiscordExterns.getCurrentID());
+		CurrentUser.Username = DiscordExterns.getCurrentUserName().toString();
+		CurrentUser.Avatar = DiscordExterns.getCurrentAvatar().toString();
+
 		return DiscordExterns.run_callbacks().toResult();
 	}
 
@@ -106,14 +122,12 @@ class Discord {
 	}
 
 	public static function updateActivity(activity:DiscordActivity, callback:ResultCallback) {
-		DiscordExterns.update_activity(activity.type, Int64Helper.parseString(activity.applicationID),
-		new ConstCharStar(activity.name), new ConstCharStar(activity.state), new ConstCharStar(activity.details),
-		activity.timestamps.start, activity.timestamps.end,
-		new ConstCharStar(activity.assets.largeImage), new ConstCharStar(activity.assets.largeText), new ConstCharStar(activity.assets.smallImage), new ConstCharStar(activity.assets.smallText),
-		new ConstCharStar(activity.party.id), activity.party.size.current, activity.party.size.max,
-		new ConstCharStar(activity.secrets.match), new ConstCharStar(activity.secrets.join), new ConstCharStar(activity.secrets.spectate),
-		activity.instance,
-		(result:Int) -> callback(result.toResult()));
+		DiscordExterns.update_activity(activity.type, Int64Helper.parseString(activity.applicationID), new ConstCharStar(activity.name),
+			new ConstCharStar(activity.state), new ConstCharStar(activity.details), activity.timestamps.start, activity.timestamps.end,
+			new ConstCharStar(activity.assets.largeImage), new ConstCharStar(activity.assets.largeText), new ConstCharStar(activity.assets.smallImage),
+			new ConstCharStar(activity.assets.smallText), new ConstCharStar(activity.party.id), activity.party.size.current, activity.party.size.max,
+			new ConstCharStar(activity.secrets.match), new ConstCharStar(activity.secrets.join), new ConstCharStar(activity.secrets.spectate),
+			activity.instance, (result:Int) -> callback(result.toResult()));
 	}
 
 	public static function clearActivity(callback:ResultCallback) {
@@ -145,19 +159,22 @@ private extern class DiscordExterns {
 	@:native('linc::discord_game_sdk::run_callbacks')
 	static function run_callbacks():Int;
 
+	@:native('linc::discord_game_sdk::getCurrentUsername')
+	static function getCurrentUserName():ConstCharStar;
+	@:native('linc::discord_game_sdk::getCurrentAvatar')
+	static function getCurrentAvatar():ConstCharStar;
+	@:native('linc::discord_game_sdk::getCurrentID')
+	static function getCurrentID():cpp.Int64;
+
 	@:native('linc::discord_game_sdk::register_command')
 	static function register_command(command:ConstCharStar):Int;
 	@:native('linc::discord_game_sdk::register_steam')
 	static function register_steam(steamID:UInt32):Int;
 	@:native('linc::discord_game_sdk::update_activity')
-	static function update_activity(type:DiscordActivityType, applicationID:Int64,
-	name:ConstCharStar, state:ConstCharStar, details:ConstCharStar,
-	startTimestamp:Int64, endTimestamp:Int64,
-	largeImage:ConstCharStar, largeText:ConstCharStar, smallImage:ConstCharStar, smallText:ConstCharStar,
-	partyID:ConstCharStar, partySize:Int32, partyMax:Int32,
-	matchSecret:ConstCharStar, joinSecret:ConstCharStar, spectateSecret:ConstCharStar,
-	instance:Bool,
-	callback:Dynamic):Void;
+	static function update_activity(type:DiscordActivityType, applicationID:Int64, name:ConstCharStar, state:ConstCharStar, details:ConstCharStar,
+		startTimestamp:Int64, endTimestamp:Int64, largeImage:ConstCharStar, largeText:ConstCharStar, smallImage:ConstCharStar, smallText:ConstCharStar,
+		partyID:ConstCharStar, partySize:Int32, partyMax:Int32, matchSecret:ConstCharStar, joinSecret:ConstCharStar, spectateSecret:ConstCharStar,
+		instance:Bool, callback:Dynamic):Void;
 	@:native('linc::discord_game_sdk::clear_activity')
 	static function clear_activity(callback:Dynamic):Void;
 	@:native('linc::discord_game_sdk::send_request_reply')
@@ -174,16 +191,14 @@ private extern class DiscordExterns {
 	static function on_activity_join_request(callback:Dynamic):Void;
 	@:native('linc::discord_game_sdk::on_activity_invite')
 	static function on_activity_invite(callback:Dynamic):Void;
+	@:native('link::discord_game_sdk::')
 }
 
-typedef ResultCallback = (DiscordResult)->Void;
-typedef InviteEvent = (Int64, ConstCharStar, ConstCharStar, ConstCharStar, Bool,
-DiscordActivityType, Int64,
-ConstCharStar, ConstCharStar, ConstCharStar,
-Int64, Int64,
-ConstCharStar, ConstCharStar, ConstCharStar, ConstCharStar,
-ConstCharStar, Int32, Int32, ConstCharStar, ConstCharStar, ConstCharStar,
-Bool)->Void;
+typedef ResultCallback = (DiscordResult) -> Void;
+
+typedef InviteEvent = (Int64, ConstCharStar, ConstCharStar, ConstCharStar, Bool, DiscordActivityType, Int64, ConstCharStar, ConstCharStar, ConstCharStar,
+	Int64, Int64, ConstCharStar, ConstCharStar, ConstCharStar, ConstCharStar, ConstCharStar, Int32, Int32, ConstCharStar, ConstCharStar, ConstCharStar,
+	Bool) -> Void;
 
 enum DiscordResult {
 	Ok;
@@ -236,7 +251,6 @@ enum DiscordResult {
 	var PurchaseError = 42;
 	var TransactionAborted = 43;
 }*/
-
 enum abstract DiscordCreateFlags(UInt64) from UInt64 to UInt64 {
 	var Default = 0;
 	var NoRequireDiscord = 1;

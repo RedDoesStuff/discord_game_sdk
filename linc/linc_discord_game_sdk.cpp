@@ -1,13 +1,43 @@
 #include <hxcpp.h>
+#include <iostream>
+#include <memory>
 #include "linc_discord_game_sdk.h"
+#include "discord.h"
 
 namespace linc {
+
 	namespace discord_game_sdk {
 		discord::Core* core{};
+		discord::User currentUser;
 
 		int create(int64_t clientID, uint64_t flags) {
-			return (int)discord::Core::Create(clientID, flags, &core);
+			int result = (int)discord::Core::Create(clientID, flags, &core);
+			
+			core->UserManager().OnCurrentUserUpdate.Connect([]() {
+				std::cout << "user updated! \n";
+				core->UserManager().GetCurrentUser(&currentUser);
+			});
+			
+			return result;
 		}
+
+		const char* getCurrentUsername()
+		{
+			return  currentUser.GetUsername();
+		}
+
+		int64_t getCurrentID()
+		{
+			return currentUser.GetId();
+		}
+
+		const char* getCurrentAvatar()
+		{
+			return currentUser.GetAvatar();
+		}
+
+
+	
 
 		int run_callbacks() {
 			return (int)core->RunCallbacks();

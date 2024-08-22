@@ -7,10 +7,9 @@ A silly fork of a simple Haxe wrapper of Discord GameSDK
 - Current user stuff
 
 #### To Do:
-- Hashlink
-
+- Other stuff (not doing hashlink on this one)
 #### Dependencies / Requirements:
 - Haxe
-- HXCPP or Hashlink
+- HXCPP
 
-#### CREDITS TO ahika462 FOR THE ORIGINAL REPO
+#### CREDITS TO ahika462 FOR THE ORIGINAL REPOSITORY

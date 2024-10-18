@@ -28,10 +28,16 @@ class Discord {
 	public static final onActivityJoinRequest:DiscordEvent<(Int64, String, String, String, Bool) -> Void, (DiscordUser -> Void)> = new DiscordEvent();
 	public static final onActivityInvite:DiscordEvent<InviteEvent, (DiscordUser, DiscordActivity) -> Void> = new DiscordEvent();
 
-	public static var CurrentUser:DiscordUsr;
+	public static var CurrentUser:DiscordUser;
 
 	public static function create(clientID:String, flags:DiscordCreateFlags = Default):DiscordResult {
-		CurrentUser = {Username: '', ID: '', Avatar: ''}
+		CurrentUser = {
+			username: '',
+			avatar: '',
+			id: '',
+			bot: false,
+			discriminator: ''
+		}
 
 		final result:DiscordResult = DiscordExterns.create(Int64Helper.parseString(clientID), flags).toResult();
 		if (result != Ok)
@@ -106,14 +112,24 @@ class Discord {
 	}
 
 	public static function runCallbacks():DiscordResult {
-		CurrentUser.ID = Std.string(DiscordExterns.getCurrentID());
-		CurrentUser.Username = DiscordExterns.getCurrentUserName().toString();
-		CurrentUser.Avatar = DiscordExterns.getCurrentAvatar().toString();
+		CurrentUser.id = Std.string(DiscordExterns.getID(true));
+		CurrentUser.username = DiscordExterns.getUserName(true).toString();
+		CurrentUser.avatar = Std.string(DiscordExterns.getAvatar(true));
 
 		return DiscordExterns.run_callbacks().toResult();
 	}
 
-	public static function registerCommand(command:String):DiscordResult {
+	public static function getUser(userID:String, callback:(DiscordUser) -> Void) {
+		DiscordExterns.getUser(Int64Helper.parseString(userID), (result:Int) -> callback({
+			username: DiscordExterns.getUserName(false),
+			id: Std.string(DiscordExterns.getID(false)),
+			bot: false,
+			avatar: DiscordExterns.getAvatar(false),
+			discriminator: ""
+		}));
+	}
+
+	static function registerCommand(command:String):DiscordResult {
 		return DiscordExterns.register_command(new ConstCharStar(command)).toResult();
 	}
 
@@ -159,12 +175,14 @@ private extern class DiscordExterns {
 	@:native('linc::discord_game_sdk::run_callbacks')
 	static function run_callbacks():Int;
 
-	@:native('linc::discord_game_sdk::getCurrentUsername')
-	static function getCurrentUserName():ConstCharStar;
-	@:native('linc::discord_game_sdk::getCurrentAvatar')
-	static function getCurrentAvatar():ConstCharStar;
-	@:native('linc::discord_game_sdk::getCurrentID')
-	static function getCurrentID():cpp.Int64;
+	@:native('linc::discord_game_sdk::getUser')
+	static function getUser(userID:Int64, callback:Dynamic):Void;
+	@:native('linc::discord_game_sdk::getUsername')
+	static function getUserName(current:Bool):ConstCharStar;
+	@:native('linc::discord_game_sdk::getAvatar')
+	static function getAvatar(current:Bool):ConstCharStar;
+	@:native('linc::discord_game_sdk::getID')
+	static function getID(current:Bool):cpp.Int64;
 
 	@:native('linc::discord_game_sdk::register_command')
 	static function register_command(command:ConstCharStar):Int;

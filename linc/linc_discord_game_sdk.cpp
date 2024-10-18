@@ -9,6 +9,7 @@ namespace linc {
 	namespace discord_game_sdk {
 		discord::Core* core{};
 		discord::User currentUser;
+		discord::User someUser;
 
 		int create(int64_t clientID, uint64_t flags) {
 			int result = (int)discord::Core::Create(clientID, flags, &core);
@@ -21,19 +22,40 @@ namespace linc {
 			return result;
 		}
 
-		const char* getCurrentUsername()
+
+
+		void getUser(int64_t userID, Dynamic& callback)
 		{
-			return  currentUser.GetUsername();
+			core->UserManager().GetUser(userID, [callback = std::move(callback)](discord::Result result, discord::User const& user)
+			{
+
+				std::cout << "nabbed user " << user.GetUsername() << '\n';
+				
+				const_cast<Dynamic&>(callback)((int)result);
+				someUser = user; 
+			});
 		}
 
-		int64_t getCurrentID()
+		const char* getUsername(bool current)
 		{
-			return currentUser.GetId();
+			discord::User user;	
+			if (current) user = currentUser; else user = someUser;		
+			return currentUser.GetUsername();
 		}
 
-		const char* getCurrentAvatar()
+		int64_t getID(bool current)
 		{
-			return currentUser.GetAvatar();
+			discord::User user;
+			if (current) user = currentUser; else user = someUser;
+			if (!current) std::cout << user.GetId();
+			return user.GetId();
+		}
+
+		const char* getAvatar(bool current)
+		{
+			discord::User user;
+			if (current) user = currentUser; else user = someUser;
+			return user.GetAvatar();
 		}
 
 

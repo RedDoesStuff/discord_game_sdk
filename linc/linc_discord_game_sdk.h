@@ -6,9 +6,10 @@ namespace linc {
 		extern int create(int64_t clientID, uint64_t flags);
 		extern int run_callbacks();
 
-		extern const char* getCurrentUsername();
-		extern int64_t getCurrentID();
-		extern const char* getCurrentAvatar();
+		extern void getUser(int64_t userID, Dynamic& callback);
+		extern const char* getUsername(bool current);
+		extern int64_t getID(bool current);
+		extern const char* getAvatar(bool current);
 
 		extern int register_command(const char* command);
 		extern int register_steam(uint32_t steamID);
